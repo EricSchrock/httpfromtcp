@@ -1,11 +1,11 @@
 package main
 
 import (
-	"bytes"
 	"fmt"
-	"io"
 	"log"
 	"net"
+
+	"github.com/EricSchrock/httpfromtcp/internal/request"
 )
 
 const port = ":42069"
@@ -26,50 +26,16 @@ func main() {
 		}
 		fmt.Println("Accepted connection from", conn.RemoteAddr())
 
-		ch := getLinesChannel(conn)
-
-		for line := range ch {
-			fmt.Println(line)
+		req, err := request.RequestFromReader(conn)
+		if err != nil {
+			log.Printf("Error reading request: %s", err.Error())
 		}
 
+		fmt.Println("Request line:")
+		fmt.Println("- Method:", req.RequestLine.Method)
+		fmt.Println("- Target:", req.RequestLine.RequestTarget)
+		fmt.Println("- Version:", req.RequestLine.HttpVersion)
+		fmt.Println()
 		fmt.Println("Connection to", conn.RemoteAddr(), "closed")
 	}
-}
-
-func getLinesChannel(f io.ReadCloser) <-chan string {
-	ch := make(chan string)
-
-	go func() {
-		defer close(ch)
-		defer f.Close()
-
-		buff := make([]byte, 8)
-		line := ""
-		for {
-			n, err := f.Read(buff)
-			if err != nil && err != io.EOF {
-				log.Fatal(err)
-			} else if err != io.EOF && n <= 0 {
-				log.Fatal("No bytes read")
-			} else if n <= 0 {
-				break
-			}
-
-			parts := bytes.Split(buff[:n], []byte{'\n'})
-			line += string(parts[0])
-			for i := 1; i < len(parts); i++ {
-				ch <- line
-				line = string(parts[i])
-			}
-
-			if err == io.EOF {
-				break
-			}
-		}
-		if line != "" {
-			ch <- line
-		}
-	}()
-
-	return ch
 }
