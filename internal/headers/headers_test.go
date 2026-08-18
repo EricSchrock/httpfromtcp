@@ -9,22 +9,22 @@ import (
 
 func TestValidSingleHeader(t *testing.T) {
 	headers := NewHeaders()
-	data := []byte("Host: localhost:42069\r\n\r\n")
+	data := []byte("Host: localhost:12345\r\n\r\n")
 	n, done, err := headers.Parse(data)
 	require.NoError(t, err)
 	require.NotNil(t, headers)
-	assert.Equal(t, "localhost:42069", headers["Host"])
+	assert.Equal(t, "localhost:12345", headers["Host"])
 	assert.Equal(t, 23, n)
 	assert.False(t, done)
 }
 
 func TestValidSingleHeaderWithExtraWhitespace(t *testing.T) {
 	headers := NewHeaders()
-	data := []byte("Host:\t \tlocalhost:42069\t \t \r\n\r\n")
+	data := []byte("Host:\t \tlocalhost:12345\t \t \r\n\r\n")
 	n, done, err := headers.Parse(data)
 	require.NoError(t, err)
 	require.NotNil(t, headers)
-	assert.Equal(t, "localhost:42069", headers["Host"])
+	assert.Equal(t, "localhost:12345", headers["Host"])
 	assert.Equal(t, 29, n)
 	assert.False(t, done)
 }
@@ -41,12 +41,12 @@ func TestValidDone(t *testing.T) {
 
 func TestValidSecondHeader(t *testing.T) {
 	headers := NewHeaders()
-	headers["Host"] = "localhost:42069"
+	headers["Host"] = "localhost:12345"
 	data := []byte("User-Agent: curl/7.81.0\r\n")
 	n, done, err := headers.Parse(data)
 	require.NoError(t, err)
 	require.NotNil(t, headers)
-	assert.Equal(t, "localhost:42069", headers["Host"])
+	assert.Equal(t, "localhost:12345", headers["Host"])
 	assert.Equal(t, "curl/7.81.0", headers["User-Agent"])
 	assert.Equal(t, 25, n)
 	assert.False(t, done)
@@ -54,19 +54,19 @@ func TestValidSecondHeader(t *testing.T) {
 
 func TestDuplicateSecondHeader(t *testing.T) {
 	headers := NewHeaders()
-	headers["Host"] = "localhost:42069"
-	data := []byte("Host: localhost:12345\r\n")
+	headers["Host"] = "localhost:12345"
+	data := []byte("Host: localhost:12346\r\n")
 	n, done, err := headers.Parse(data)
 	require.Error(t, err)
 	require.NotNil(t, headers)
-	assert.Equal(t, "localhost:42069", headers["Host"])
+	assert.Equal(t, "localhost:12345", headers["Host"])
 	assert.Equal(t, 0, n)
 	assert.False(t, done)
 }
 
 func TestInvalidHeaderLeadingspace(t *testing.T) {
 	headers := NewHeaders()
-	data := []byte(" Host: localhost:42069\r\n\r\n")
+	data := []byte(" Host: localhost:12345\r\n\r\n")
 	n, done, err := headers.Parse(data)
 	require.Error(t, err)
 	assert.Equal(t, 0, n)
@@ -75,7 +75,7 @@ func TestInvalidHeaderLeadingspace(t *testing.T) {
 
 func TestInvalidHeaderSpaceBeforeColon(t *testing.T) {
 	headers := NewHeaders()
-	data := []byte("Host : localhost:42069\r\n\r\n")
+	data := []byte("Host : localhost:12345\r\n\r\n")
 	n, done, err := headers.Parse(data)
 	require.Error(t, err)
 	assert.Equal(t, 0, n)
@@ -84,7 +84,7 @@ func TestInvalidHeaderSpaceBeforeColon(t *testing.T) {
 
 func TestInvalidWhitespaceInHeaderFieldName(t *testing.T) {
 	headers := NewHeaders()
-	data := []byte("Ho st: localhost:42069\r\n\r\n")
+	data := []byte("Ho st: localhost:12345\r\n\r\n")
 	n, done, err := headers.Parse(data)
 	require.Error(t, err)
 	assert.Equal(t, 0, n)

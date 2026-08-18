@@ -9,7 +9,7 @@ import (
 )
 
 func main() {
-	addr, err := net.ResolveUDPAddr("udp", "localhost:42069")
+	addr, err := net.ResolveUDPAddr("udp", "localhost:12345")
 	if err != nil {
 		log.Fatalf("Failed to resolve UDP address: %v", err.Error())
 	}

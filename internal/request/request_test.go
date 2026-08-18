@@ -32,7 +32,7 @@ func (cr *chunkReader) Read(p []byte) (n int, err error) {
 }
 
 func TestParseGetRequestLine(t *testing.T) {
-	r, err := RequestFromReader(strings.NewReader("GET / HTTP/1.1\r\nHost: localhost:42069\r\nUser-Agent: curl/7.81.0\r\nAccept: */*\r\n\r\n"))
+	r, err := RequestFromReader(strings.NewReader("GET / HTTP/1.1\r\nHost: localhost:12345\r\nUser-Agent: curl/7.81.0\r\nAccept: */*\r\n\r\n"))
 	require.NoError(t, err)
 	require.NotNil(t, r)
 	assert.Equal(t, "GET", r.RequestLine.Method)
@@ -42,7 +42,7 @@ func TestParseGetRequestLine(t *testing.T) {
 
 func TestParseGetRequestLineThreeBytesAtAtime(t *testing.T) {
 	reader := &chunkReader{
-		data:            "GET / HTTP/1.1\r\nHost: localhost:42069\r\nUser-Agent: curl/7.81.0\r\nAccept: */*\r\n\r\n",
+		data:            "GET / HTTP/1.1\r\nHost: localhost:12345\r\nUser-Agent: curl/7.81.0\r\nAccept: */*\r\n\r\n",
 		numBytesPerRead: 3,
 	}
 
@@ -56,7 +56,7 @@ func TestParseGetRequestLineThreeBytesAtAtime(t *testing.T) {
 
 func TestParseGetRequestLineOneByteAtATime(t *testing.T) {
 	reader := &chunkReader{
-		data:            "GET / HTTP/1.1\r\nHost: localhost:42069\r\nUser-Agent: curl/7.81.0\r\nAccept: */*\r\n\r\n",
+		data:            "GET / HTTP/1.1\r\nHost: localhost:12345\r\nUser-Agent: curl/7.81.0\r\nAccept: */*\r\n\r\n",
 		numBytesPerRead: 1,
 	}
 
@@ -69,7 +69,7 @@ func TestParseGetRequestLineOneByteAtATime(t *testing.T) {
 }
 
 func TestParseGetRequestLineWithPath(t *testing.T) {
-	r, err := RequestFromReader(strings.NewReader("GET /coffee HTTP/1.1\r\nHost: localhost:42069\r\nUser-Agent: curl/7.81.0\r\nAccept: */*\r\n\r\n"))
+	r, err := RequestFromReader(strings.NewReader("GET /coffee HTTP/1.1\r\nHost: localhost:12345\r\nUser-Agent: curl/7.81.0\r\nAccept: */*\r\n\r\n"))
 	require.NoError(t, err)
 	require.NotNil(t, r)
 	assert.Equal(t, "GET", r.RequestLine.Method)
@@ -78,7 +78,7 @@ func TestParseGetRequestLineWithPath(t *testing.T) {
 }
 
 func TestParsePostRequestLineWithPath(t *testing.T) {
-	r, err := RequestFromReader(strings.NewReader("POST /coffee HTTP/1.1\r\nHost: localhost:42069\r\nUser-Agent: curl/7.81.0\r\nAccept: */*\r\n\r\n"))
+	r, err := RequestFromReader(strings.NewReader("POST /coffee HTTP/1.1\r\nHost: localhost:12345\r\nUser-Agent: curl/7.81.0\r\nAccept: */*\r\n\r\n"))
 	require.NoError(t, err)
 	require.NotNil(t, r)
 	assert.Equal(t, "POST", r.RequestLine.Method)
@@ -87,46 +87,46 @@ func TestParsePostRequestLineWithPath(t *testing.T) {
 }
 
 func TestParseRequestLineWithTooFewParts(t *testing.T) {
-	_, err := RequestFromReader(strings.NewReader("/coffee HTTP/1.1\r\nHost: localhost:42069\r\nUser-Agent: curl/7.81.0\r\nAccept: */*\r\n\r\n"))
+	_, err := RequestFromReader(strings.NewReader("/coffee HTTP/1.1\r\nHost: localhost:12345\r\nUser-Agent: curl/7.81.0\r\nAccept: */*\r\n\r\n"))
 	require.Error(t, err)
 }
 
 func TestParseRequestLineWithTooManyParts(t *testing.T) {
-	_, err := RequestFromReader(strings.NewReader("GET /cof fee HTTP/1.1\r\nHost: localhost:42069\r\nUser-Agent: curl/7.81.0\r\nAccept: */*\r\n\r\n"))
+	_, err := RequestFromReader(strings.NewReader("GET /cof fee HTTP/1.1\r\nHost: localhost:12345\r\nUser-Agent: curl/7.81.0\r\nAccept: */*\r\n\r\n"))
 	require.Error(t, err)
 }
 
 func TestParseRequestLineWithInvalidMethod(t *testing.T) {
-	_, err := RequestFromReader(strings.NewReader("GOT /coffee HTTP/1.1\r\nHost: localhost:42069\r\nUser-Agent: curl/7.81.0\r\nAccept: */*\r\n\r\n"))
+	_, err := RequestFromReader(strings.NewReader("GOT /coffee HTTP/1.1\r\nHost: localhost:12345\r\nUser-Agent: curl/7.81.0\r\nAccept: */*\r\n\r\n"))
 	require.Error(t, err)
 }
 
 func TestParseRequestLineWithUncapitalizedMethod(t *testing.T) {
-	_, err := RequestFromReader(strings.NewReader("Get /coffee HTTP/1.1\r\nHost: localhost:42069\r\nUser-Agent: curl/7.81.0\r\nAccept: */*\r\n\r\n"))
+	_, err := RequestFromReader(strings.NewReader("Get /coffee HTTP/1.1\r\nHost: localhost:12345\r\nUser-Agent: curl/7.81.0\r\nAccept: */*\r\n\r\n"))
 	require.Error(t, err)
 }
 
 func TestParseRequestLineOutOfOrder(t *testing.T) {
-	_, err := RequestFromReader(strings.NewReader("HTTP/1.1 Get /coffee\r\nHost: localhost:42069\r\nUser-Agent: curl/7.81.0\r\nAccept: */*\r\n\r\n"))
+	_, err := RequestFromReader(strings.NewReader("HTTP/1.1 Get /coffee\r\nHost: localhost:12345\r\nUser-Agent: curl/7.81.0\r\nAccept: */*\r\n\r\n"))
 	require.Error(t, err)
 }
 
 func TestParseRequestLineWithTooFewVersionParts(t *testing.T) {
-	_, err := RequestFromReader(strings.NewReader("GET /coffee HTTP1.1\r\nHost: localhost:42069\r\nUser-Agent: curl/7.81.0\r\nAccept: */*\r\n\r\n"))
+	_, err := RequestFromReader(strings.NewReader("GET /coffee HTTP1.1\r\nHost: localhost:12345\r\nUser-Agent: curl/7.81.0\r\nAccept: */*\r\n\r\n"))
 	require.Error(t, err)
 }
 
 func TestParseRequestLineWithTooManyVersionParts(t *testing.T) {
-	_, err := RequestFromReader(strings.NewReader("GET /coffee HTTP/1.1/1.1\r\nHost: localhost:42069\r\nUser-Agent: curl/7.81.0\r\nAccept: */*\r\n\r\n"))
+	_, err := RequestFromReader(strings.NewReader("GET /coffee HTTP/1.1/1.1\r\nHost: localhost:12345\r\nUser-Agent: curl/7.81.0\r\nAccept: */*\r\n\r\n"))
 	require.Error(t, err)
 }
 
 func TestParseRequestLineWithInvalidFirstVersionPart(t *testing.T) {
-	_, err := RequestFromReader(strings.NewReader("GET /coffee HTTPS/1.1\r\nHost: localhost:42069\r\nUser-Agent: curl/7.81.0\r\nAccept: */*\r\n\r\n"))
+	_, err := RequestFromReader(strings.NewReader("GET /coffee HTTPS/1.1\r\nHost: localhost:12345\r\nUser-Agent: curl/7.81.0\r\nAccept: */*\r\n\r\n"))
 	require.Error(t, err)
 }
 
 func TestParseRequestLineWithInvalidSecondVersionPart(t *testing.T) {
-	_, err := RequestFromReader(strings.NewReader("GET /coffee HTTP/1.0\r\nHost: localhost:42069\r\nUser-Agent: curl/7.81.0\r\nAccept: */*\r\n\r\n"))
+	_, err := RequestFromReader(strings.NewReader("GET /coffee HTTP/1.0\r\nHost: localhost:12345\r\nUser-Agent: curl/7.81.0\r\nAccept: */*\r\n\r\n"))
 	require.Error(t, err)
 }
