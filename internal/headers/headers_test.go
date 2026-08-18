@@ -57,10 +57,10 @@ func TestDuplicateSecondHeader(t *testing.T) {
 	headers["Host"] = "localhost:12345"
 	data := []byte("Host: localhost:12346\r\n")
 	n, done, err := headers.Parse(data)
-	require.Error(t, err)
+	require.NoError(t, err)
 	require.NotNil(t, headers)
-	assert.Equal(t, "localhost:12345", headers["Host"])
-	assert.Equal(t, 0, n)
+	assert.Equal(t, "localhost:12345, localhost:12346", headers["Host"])
+	assert.Equal(t, 23, n)
 	assert.False(t, done)
 }
 

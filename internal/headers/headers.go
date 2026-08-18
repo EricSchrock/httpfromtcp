@@ -28,11 +28,12 @@ func (h Headers) Parse(data []byte) (n int, done bool, err error) {
 		return 0, false, fmt.Errorf("Header field name contains whitespace: name='%v'", name)
 	}
 
-	if _, exists := h[name]; exists {
-		return 0, false, fmt.Errorf("Duplicate header field name: name='%v'", name)
+	value = strings.TrimSpace(value)
+	if existing, exists := h[name]; exists {
+		h[name] = existing + ", " + value
+	} else {
+		h[name] = value
 	}
-
-	h[name] = strings.TrimSpace(value)
 
 	return len(header) + 2, false, nil // acount for \r\n
 }
