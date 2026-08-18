@@ -56,10 +56,12 @@ func TestDuplicateSecondHeader(t *testing.T) {
 	headers := NewHeaders()
 	headers["Host"] = "localhost:42069"
 	data := []byte("Host: localhost:12345\r\n")
-	_, _, err := headers.Parse(data)
+	n, done, err := headers.Parse(data)
 	require.Error(t, err)
 	require.NotNil(t, headers)
 	assert.Equal(t, "localhost:42069", headers["Host"])
+	assert.Equal(t, 0, n)
+	assert.False(t, done)
 }
 
 func TestInvalidHeaderLeadingspace(t *testing.T) {
@@ -74,6 +76,15 @@ func TestInvalidHeaderLeadingspace(t *testing.T) {
 func TestInvalidHeaderSpaceBeforeColon(t *testing.T) {
 	headers := NewHeaders()
 	data := []byte("Host : localhost:42069\r\n\r\n")
+	n, done, err := headers.Parse(data)
+	require.Error(t, err)
+	assert.Equal(t, 0, n)
+	assert.False(t, done)
+}
+
+func TestInvalidWhitespaceInHeaderFieldName(t *testing.T) {
+	headers := NewHeaders()
+	data := []byte("Ho st: localhost:42069\r\n\r\n")
 	n, done, err := headers.Parse(data)
 	require.Error(t, err)
 	assert.Equal(t, 0, n)

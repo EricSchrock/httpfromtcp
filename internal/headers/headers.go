@@ -24,8 +24,8 @@ func (h Headers) Parse(data []byte) (n int, done bool, err error) {
 		return 0, false, fmt.Errorf("Expected header to be a name:value pair): header='%v'", header)
 	}
 
-	if name != strings.TrimSpace(name) {
-		return 0, false, fmt.Errorf("Header field name has leading or trailing whitespace: name='%v'", name)
+	if strings.ContainsAny(name, " \t") {
+		return 0, false, fmt.Errorf("Header field name contains whitespace: name='%v'", name)
 	}
 
 	if _, exists := h[name]; exists {
