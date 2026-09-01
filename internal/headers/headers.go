@@ -28,6 +28,7 @@ func (h Headers) Parse(data []byte) (n int, done bool, err error) {
 		return 0, false, fmt.Errorf("Header field name contains whitespace: name='%v'", name)
 	}
 
+	name = strings.ToLower(name)
 	value = strings.TrimSpace(value)
 	if existing, exists := h[name]; exists {
 		h[name] = existing + ", " + value
