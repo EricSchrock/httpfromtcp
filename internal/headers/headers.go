@@ -29,12 +29,12 @@ func (h Headers) Parse(data []byte) (n int, done bool, err error) {
 		return 0, false, fmt.Errorf("Header field name contains whitespace: name='%v'", name)
 	}
 
-	name = strings.ToLower(name)
-	invalidToken := regexp.MustCompile("[^a-z0-9!#$%&'*+.^_`|~-]")
+	invalidToken := regexp.MustCompile("[^A-Za-z0-9!#$%&'*+.^_`|~-]")
 	if invalidToken.MatchString(name) {
 		return 0, false, fmt.Errorf("Header field name contains invalid characters: name='%v'", name)
 	}
 
+	name = strings.ToLower(name)
 	value = strings.TrimSpace(value)
 	if existing, exists := h[name]; exists {
 		h[name] = existing + ", " + value
