@@ -2,6 +2,7 @@ package headers
 
 import (
 	"fmt"
+	"regexp"
 	"strings"
 )
 
@@ -29,6 +30,11 @@ func (h Headers) Parse(data []byte) (n int, done bool, err error) {
 	}
 
 	name = strings.ToLower(name)
+	invalidToken := regexp.MustCompile("[^a-z0-9!#$%&'*+.^_`|~-]")
+	if invalidToken.MatchString(name) {
+		return 0, false, fmt.Errorf("Header field name contains invalid characters: name='%v'", name)
+	}
+
 	value = strings.TrimSpace(value)
 	if existing, exists := h[name]; exists {
 		h[name] = existing + ", " + value

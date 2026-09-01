@@ -81,6 +81,8 @@ func TestInvalidHeaderLeadingspace(t *testing.T) {
 	data := []byte(" host: localhost:12345\r\n\r\n")
 	n, done, err := headers.Parse(data)
 	require.Error(t, err)
+	assert.NotContains(t, headers, "host")
+	assert.NotContains(t, headers, " host")
 	assert.Equal(t, 0, n)
 	assert.False(t, done)
 }
@@ -90,6 +92,8 @@ func TestInvalidHeaderSpaceBeforeColon(t *testing.T) {
 	data := []byte("host : localhost:12345\r\n\r\n")
 	n, done, err := headers.Parse(data)
 	require.Error(t, err)
+	assert.NotContains(t, headers, "host")
+	assert.NotContains(t, headers, "host ")
 	assert.Equal(t, 0, n)
 	assert.False(t, done)
 }
@@ -99,6 +103,18 @@ func TestInvalidWhitespaceInHeaderFieldName(t *testing.T) {
 	data := []byte("ho st: localhost:12345\r\n\r\n")
 	n, done, err := headers.Parse(data)
 	require.Error(t, err)
+	assert.NotContains(t, headers, "host")
+	assert.NotContains(t, headers, "ho st")
+	assert.Equal(t, 0, n)
+	assert.False(t, done)
+}
+
+func TestInvalidCharacterInHeaderFieldName(t *testing.T) {
+	headers := NewHeaders()
+	data := []byte("h@st: localhost:12345\r\n\r\n")
+	n, done, err := headers.Parse(data)
+	require.Error(t, err)
+	assert.NotContains(t, headers, "h@st")
 	assert.Equal(t, 0, n)
 	assert.False(t, done)
 }
