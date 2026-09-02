@@ -130,3 +130,64 @@ func TestParseRequestLineWithInvalidSecondVersionPart(t *testing.T) {
 	_, err := RequestFromReader(strings.NewReader("GET /coffee HTTP/1.0\r\nHost: localhost:12345\r\nUser-Agent: curl/7.81.0\r\nAccept: */*\r\n\r\n"))
 	require.Error(t, err)
 }
+
+func TestParseValidHeaders(t *testing.T) {
+	reader := &chunkReader{
+		data:            "GET / HTTP/1.1\r\nhost: localhost:12345\r\nuser-agent: curl/7.81.0\r\naccept: */*\r\n\r\n",
+		numBytesPerRead: 3,
+	}
+
+	r, err := RequestFromReader(reader)
+	require.NoError(t, err)
+	require.NotNil(t, r)
+	assert.Equal(t, "localhost:12345", r.Headers["host"])
+	assert.Equal(t, "curl/7.81.0", r.Headers["user-agent"])
+	assert.Equal(t, "*/*", r.Headers["accept"])
+}
+
+func TestParseEmptyHeaders(t *testing.T) {
+	reader := &chunkReader{
+		data:            "GET / HTTP/1.1\r\n\r\n",
+		numBytesPerRead: 3,
+	}
+
+	r, err := RequestFromReader(reader)
+	require.NoError(t, err)
+	require.NotNil(t, r)
+	assert.Empty(t, r.Headers)
+}
+
+func TestParseDuplicateHeaders(t *testing.T) {
+	reader := &chunkReader{
+		data:            "GET / HTTP/1.1\r\nhost: localhost:12345\r\nhost: localhost:12346\r\n\r\n",
+		numBytesPerRead: 3,
+	}
+
+	r, err := RequestFromReader(reader)
+	require.NoError(t, err)
+	require.NotNil(t, r)
+	assert.Equal(t, "localhost:12345, localhost:12346", r.Headers["host"])
+}
+
+func TestParseCaseInsensitiveHeaders(t *testing.T) {
+	reader := &chunkReader{
+		data:            "GET / HTTP/1.1\r\nHost: localhost:12345\r\n\r\n",
+		numBytesPerRead: 3,
+	}
+
+	r, err := RequestFromReader(reader)
+	require.NoError(t, err)
+	require.NotNil(t, r)
+	assert.Equal(t, "localhost:12345", r.Headers["host"])
+	assert.NotContains(t, r.Headers, "Host")
+}
+
+func TestParseMalformedHeader(t *testing.T) {
+	_, err := RequestFromReader(strings.NewReader("GET / HTTP/1.1\r\nhost localhost:12345\r\n\r\n"))
+	require.Error(t, err)
+}
+
+func TestParseMissingEndOfHeaders(t *testing.T) {
+	_, err := RequestFromReader(strings.NewReader("GET / HTTP/1.1\r\nhost localhost:12345\r\n"))
+	require.Error(t, err)
+}
