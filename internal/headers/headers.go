@@ -21,7 +21,7 @@ func (h Headers) Parse(data []byte) (n int, done bool, err error) {
 	}
 
 	name, value, found := strings.Cut(header, ":")
-	if !found {
+	if !found || name == "" {
 		return 0, false, fmt.Errorf("Expected header to be a name:value pair): header='%v'", header)
 	}
 

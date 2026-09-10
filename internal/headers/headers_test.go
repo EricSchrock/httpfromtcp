@@ -118,3 +118,13 @@ func TestInvalidCharacterInHeaderFieldName(t *testing.T) {
 	assert.Equal(t, 0, n)
 	assert.False(t, done)
 }
+
+func TestMissingFieldName(t *testing.T) {
+	headers := NewHeaders()
+	data := []byte(": localhost:12345\r\n\r\n")
+	n, done, err := headers.Parse(data)
+	require.Error(t, err)
+	assert.NotContains(t, headers, "")
+	assert.Equal(t, 0, n)
+	assert.False(t, done)
+}
