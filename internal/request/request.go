@@ -40,18 +40,19 @@ func RequestFromReader(reader io.Reader) (*Request, error) {
 	var parseBuffer []byte
 	for req.state != parsingComplete {
 		n, err := reader.Read(readBuffer)
-		if n > 0 {
+		if (err != nil) && (err != io.EOF) {
+			return nil, err
+		} else if n > 0 {
 			parseBuffer = append(parseBuffer, readBuffer[:n]...)
 			bytesParsed, err := req.parse(parseBuffer)
 			if err != nil {
 				return nil, err
 			}
 			parseBuffer = parseBuffer[bytesParsed:]
-		} else if err == io.EOF {
-			req.state = parsingComplete
-			break
-		} else if err != nil {
-			return nil, err
+		}
+
+		if (err == io.EOF) && (req.state != parsingComplete) {
+			return nil, fmt.Errorf("Incomplete request received")
 		}
 	}
 

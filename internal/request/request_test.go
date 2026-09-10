@@ -188,6 +188,6 @@ func TestParseMalformedHeader(t *testing.T) {
 }
 
 func TestParseMissingEndOfHeaders(t *testing.T) {
-	_, err := RequestFromReader(strings.NewReader("GET / HTTP/1.1\r\nhost localhost:12345\r\n"))
+	_, err := RequestFromReader(strings.NewReader("GET / HTTP/1.1\r\nhost: localhost:12345\r\n"))
 	require.Error(t, err)
 }
