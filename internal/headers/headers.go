@@ -44,3 +44,8 @@ func (h Headers) Parse(data []byte) (n int, done bool, err error) {
 
 	return len(header) + 2, false, nil // acount for \r\n
 }
+
+func (h Headers) Get(name string) (value string, found bool) {
+	value, found = h[strings.ToLower(name)]
+	return
+}

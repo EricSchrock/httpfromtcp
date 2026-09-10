@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"io"
 	"slices"
+	"strconv"
 	"strings"
 
 	"github.com/EricSchrock/httpfromtcp/internal/headers"
@@ -14,12 +15,14 @@ type requestState int
 const (
 	requestInitialized requestState = iota
 	parsingHeaders
+	parsingBody
 	parsingComplete
 )
 
 type Request struct {
 	RequestLine RequestLine
 	Headers     headers.Headers
+	Body        []byte
 
 	state requestState
 }
@@ -69,23 +72,47 @@ func (r *Request) parse(data []byte) (int, error) {
 		requestLine, bytesParsed, err := parseRequestLine(string(data))
 		if err != nil {
 			return 0, err
-		} else if bytesParsed > 0 {
-			r.state = parsingHeaders
-			r.RequestLine = *requestLine
+		} else if bytesParsed <= 0 {
+			return totalBytesParsed, nil
+		}
+
+		r.state = parsingHeaders
+		r.RequestLine = *requestLine
+		totalBytesParsed += bytesParsed
+	}
+
+	for r.state == parsingHeaders {
+		bytesParsed, final, err := r.Headers.Parse(data[totalBytesParsed:])
+		if err != nil {
+			return 0, err
+		} else if bytesParsed <= 0 {
+			return totalBytesParsed, nil
+		} else if final {
+			r.state = parsingBody
 		}
 		totalBytesParsed += bytesParsed
 	}
 
-	for r.state != parsingComplete {
-		bytesParsed, final, err := r.Headers.Parse(data[totalBytesParsed:])
+	if r.state == parsingBody {
+		value, found := r.Headers.Get("content-length")
+		if !found {
+			r.state = parsingComplete // assume there is no body
+			return totalBytesParsed, nil
+		}
+
+		content_length, err := strconv.Atoi(value)
 		if err != nil {
-			return totalBytesParsed, err // return the number of bytes successfully parsed before the error (since those Request object changes will persist)
-		} else if bytesParsed <= 0 {
-			break
-		} else if final {
+			return 0, err
+		}
+
+		r.Body = append(r.Body, data[totalBytesParsed:]...)
+		totalBytesParsed = len(data)
+
+		if len(r.Body) > content_length {
+			return 0, fmt.Errorf("Body length is >= '%v' bytes but content-length='%v'", len(r.Body), content_length)
+		} else if len(r.Body) == content_length {
 			r.state = parsingComplete
 		}
-		totalBytesParsed += bytesParsed
 	}
 
 	return totalBytesParsed, nil

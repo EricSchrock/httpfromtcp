@@ -191,3 +191,73 @@ func TestParseMissingEndOfHeaders(t *testing.T) {
 	_, err := RequestFromReader(strings.NewReader("GET / HTTP/1.1\r\nhost: localhost:12345\r\n"))
 	require.Error(t, err)
 }
+
+func TestParseValidBody(t *testing.T) {
+	reader := &chunkReader{
+		data: "POST /submit HTTP/1.1\r\n" +
+			"host: localhost:12345\r\n" +
+			"content-length: 13\r\n" +
+			"\r\n" +
+			"hello world!\n",
+		numBytesPerRead: 3,
+	}
+
+	r, err := RequestFromReader(reader)
+	require.NoError(t, err)
+	require.NotNil(t, r)
+	assert.Equal(t, "hello world!\n", string(r.Body))
+}
+
+func TestParseValidBodyNoContentLength(t *testing.T) {
+	reader := &chunkReader{
+		data: "POST /submit HTTP/1.1\r\n" +
+			"host: localhost:12345\r\n" +
+			"\r\n" +
+			"hello world!\n",
+		numBytesPerRead: 3,
+	}
+
+	r, err := RequestFromReader(reader)
+	require.NoError(t, err)
+	require.NotNil(t, r)
+	assert.Equal(t, "", string(r.Body)) // parser drops body if no content-length header is present
+}
+
+func TestParseEmptyBody(t *testing.T) {
+	reader := &chunkReader{
+		data: "POST /submit HTTP/1.1\r\n" +
+			"host: localhost:12345\r\n" +
+			"content-length: 0\r\n" +
+			"\r\n",
+		numBytesPerRead: 3,
+	}
+
+	r, err := RequestFromReader(reader)
+	require.NoError(t, err)
+	require.NotNil(t, r)
+	assert.Equal(t, "", string(r.Body))
+}
+
+func TestParseEmptyBodyNoContentLength(t *testing.T) {
+	reader := &chunkReader{
+		data: "POST /submit HTTP/1.1\r\n" +
+			"host: localhost:12345\r\n" +
+			"\r\n",
+		numBytesPerRead: 3,
+	}
+
+	r, err := RequestFromReader(reader)
+	require.NoError(t, err)
+	require.NotNil(t, r)
+	assert.Equal(t, "", string(r.Body))
+}
+
+func TestParseBodyShorterThanContentLength(t *testing.T) {
+	_, err := RequestFromReader(strings.NewReader("POST /submit HTTP/1.1\r\nhost: localhost:12345\r\ncontent-length: 13\r\n\r\nhello world\n"))
+	require.Error(t, err)
+}
+
+func TestParseBodyLongerThanContentLength(t *testing.T) {
+	_, err := RequestFromReader(strings.NewReader("POST /submit HTTP/1.1\r\nhost: localhost:12345\r\ncontent-length: 13\r\n\r\nhello world!!\n"))
+	require.Error(t, err)
+}
