@@ -29,19 +29,26 @@ func main() {
 		req, err := request.RequestFromReader(conn)
 		if err != nil {
 			log.Printf("Error reading request: %s", err.Error())
+		} else {
+			fmt.Println()
+			fmt.Println("Request line:")
+			fmt.Println("- Method:", req.RequestLine.Method)
+			fmt.Println("- Target:", req.RequestLine.RequestTarget)
+			fmt.Println("- Version:", req.RequestLine.HttpVersion)
+			fmt.Println("Headers:")
+			for name, value := range req.Headers {
+				fmt.Printf("- %v: %v\n", name, value)
+			}
+			fmt.Println("Body:")
+			fmt.Println(string(req.Body))
+			fmt.Println()
 		}
 
-		fmt.Println("Request line:")
-		fmt.Println("- Method:", req.RequestLine.Method)
-		fmt.Println("- Target:", req.RequestLine.RequestTarget)
-		fmt.Println("- Version:", req.RequestLine.HttpVersion)
-		fmt.Println("Headers:")
-		for name, value := range req.Headers {
-			fmt.Printf("- %v: %v\n", name, value)
+		err = conn.Close()
+		if err != nil {
+			log.Printf("Error closing connection: %s", err.Error())
+		} else {
+			fmt.Println("Connection to", conn.RemoteAddr(), "closed")
 		}
-		fmt.Println("Body:")
-		fmt.Println(string(req.Body))
-		fmt.Println()
-		fmt.Println("Connection to", conn.RemoteAddr(), "closed")
 	}
 }
