@@ -1,7 +1,7 @@
 package main
 
 import (
-	"io"
+	"fmt"
 	"log"
 	"os"
 	"os/signal"
@@ -28,20 +28,51 @@ func main() {
 	log.Println("Server gracefully stopped")
 }
 
-func handler(w io.Writer, req *request.Request) *server.HandlerError {
+func handler(w *response.Writer, req *request.Request) {
+	var status response.StatusCode = response.StatusOK
+	title := "200 OK"
+	heading := "Success!"
+	message := "Your request was an absolute banger."
 	if target := req.RequestLine.RequestTarget; target == "/yourproblem" {
-		return &server.HandlerError{
-			Status:  response.StatusBadRequest,
-			Message: "Your problem is not my problem\n",
-		}
+		status = response.StatusBadRequest
+		title = "400 Bad Request"
+		heading = "Bad Request"
+		message = "Your request honestly kinda sucked."
 	} else if target == "/myproblem" {
-		return &server.HandlerError{
-			Status:  response.StatusInternalServerError,
-			Message: "Woopsie, my bad\n",
-		}
+		status = response.StatusInternalServerError
+		title = "500 Internal Server Error"
+		heading = "Internal Server Error"
+		message = "Okay, you know what? This one is on me."
 	}
 
-	w.Write([]byte("All good, frfr\n"))
+	body := fmt.Sprintf(`
+	<html>
+		<head>
+			<title>%s</title>
+		</head>
+		<body>
+			<h1>%s</h1>
+			<p>%s</p>
+		</body>
+	</html>
+	`, title, heading, message)
 
-	return nil
+	err := w.WriteStatusLine(status)
+	if err != nil {
+		log.Printf("Error writing status line: %v", err)
+		return
+	}
+
+	headers := response.GetDefaultHeaders(len(body))
+	err = w.WriteHeaders(headers)
+	if err != nil {
+		log.Printf("Error writing headers: %v", err)
+		return
+	}
+
+	_, err = w.WriteBody([]byte(body))
+	if err != nil {
+		log.Printf("Error writing body: %v", err)
+		return
+	}
 }

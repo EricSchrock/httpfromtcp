@@ -15,7 +15,17 @@ const (
 	StatusInternalServerError = 500
 )
 
-func WriteStatusLine(w io.Writer, statusCode StatusCode) error {
+type Writer struct {
+	conn io.Writer
+}
+
+func NewWriter(conn io.Writer) *Writer {
+	return &Writer{
+		conn: conn,
+	}
+}
+
+func (w *Writer) WriteStatusLine(statusCode StatusCode) error {
 	statusMap := map[StatusCode]string{
 		StatusOK:                  "OK",
 		StatusBadRequest:          "Bad Request",
@@ -27,7 +37,7 @@ func WriteStatusLine(w io.Writer, statusCode StatusCode) error {
 		return fmt.Errorf("Invalid status code: %v", statusCode)
 	}
 
-	_, err := w.Write([]byte(fmt.Sprintf("HTTP/1.1 %d %s\r\n", statusCode, reasonPhrase)))
+	_, err := w.conn.Write([]byte(fmt.Sprintf("HTTP/1.1 %d %s\r\n", statusCode, reasonPhrase)))
 	if err != nil {
 		return fmt.Errorf("Failed to write status line: %v", err)
 	}
@@ -40,18 +50,22 @@ func GetDefaultHeaders(contentLen int) headers.Headers {
 
 	headers["Content-Length"] = fmt.Sprintf("%d", contentLen)
 	headers["Connection"] = "close"
-	headers["Content-Type"] = "text/plain"
+	headers["Content-Type"] = "text/html"
 
 	return headers
 }
 
-func WriteHeaders(w io.Writer, headers headers.Headers) error {
+func (w *Writer) WriteHeaders(headers headers.Headers) error {
 	for name, value := range headers {
-		_, err := w.Write([]byte(fmt.Sprintf("%s: %s\r\n", name, value)))
+		_, err := w.conn.Write([]byte(fmt.Sprintf("%s: %s\r\n", name, value)))
 		if err != nil {
 			fmt.Errorf("Failed to write '%s: %s' header: %v", name, value, err)
 		}
 	}
 
 	return nil
+}
+
+func (w *Writer) WriteBody(p []byte) (int, error) {
+	return w.conn.Write(append([]byte("\r\n"), p...))
 }
