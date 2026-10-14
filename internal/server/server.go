@@ -49,8 +49,8 @@ func (s *Server) Close() error {
 func (s *Server) listen() {
 	for {
 		conn, err := s.listener.Accept()
-		if s.isClosed.Load() {
-			continue
+		if err == net.ErrClosed || s.isClosed.Load() {
+			return
 		} else if err != nil {
 			log.Printf("Error accepting connection: %v", err)
 			continue
