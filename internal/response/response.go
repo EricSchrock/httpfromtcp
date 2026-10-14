@@ -15,17 +15,32 @@ const (
 	StatusInternalServerError = 500
 )
 
+type writerState int
+
+const (
+	writerInitialized writerState = iota
+	statusLineWritten
+	headersWritten
+	bodyWritten
+)
+
 type Writer struct {
-	conn io.Writer
+	state writerState
+	conn  io.Writer
 }
 
 func NewWriter(conn io.Writer) *Writer {
 	return &Writer{
-		conn: conn,
+		state: writerInitialized,
+		conn:  conn,
 	}
 }
 
 func (w *Writer) WriteStatusLine(statusCode StatusCode) error {
+	if w.state != writerInitialized {
+		return fmt.Errorf("Invalid response writer state: %v", w.state)
+	}
+
 	statusMap := map[StatusCode]string{
 		StatusOK:                  "OK",
 		StatusBadRequest:          "Bad Request",
@@ -42,6 +57,7 @@ func (w *Writer) WriteStatusLine(statusCode StatusCode) error {
 		return fmt.Errorf("Failed to write status line: %v", err)
 	}
 
+	w.state = statusLineWritten
 	return nil
 }
 
@@ -56,6 +72,10 @@ func GetDefaultHeaders(contentLen int) headers.Headers {
 }
 
 func (w *Writer) WriteHeaders(headers headers.Headers) error {
+	if w.state != statusLineWritten {
+		return fmt.Errorf("Invalid response writer state: %v", w.state)
+	}
+
 	for name, value := range headers {
 		_, err := w.conn.Write([]byte(fmt.Sprintf("%s: %s\r\n", name, value)))
 		if err != nil {
@@ -63,9 +83,15 @@ func (w *Writer) WriteHeaders(headers headers.Headers) error {
 		}
 	}
 
+	w.state = headersWritten
 	return nil
 }
 
 func (w *Writer) WriteBody(p []byte) (int, error) {
+	if w.state != headersWritten {
+		return 0, fmt.Errorf("Invalid response writer state: %v", w.state)
+	}
+
+	w.state = bodyWritten
 	return w.conn.Write(append([]byte("\r\n"), p...))
 }
