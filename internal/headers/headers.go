@@ -25,13 +25,22 @@ func (h Headers) Parse(data []byte) (n int, done bool, err error) {
 		return 0, false, fmt.Errorf("Expected header to be a name:value pair): header='%v'", header)
 	}
 
+	err = h.Add(name, value)
+	if err != nil {
+		return 0, false, err
+	}
+
+	return len(header) + 2, false, nil // acount for \r\n
+}
+
+func (h Headers) Add(name string, value string) error {
 	if strings.ContainsAny(name, " \t") {
-		return 0, false, fmt.Errorf("Header field name contains whitespace: name='%v'", name)
+		return fmt.Errorf("Header field name contains whitespace: name='%v'", name)
 	}
 
 	invalidToken := regexp.MustCompile("[^A-Za-z0-9!#$%&'*+.^_`|~-]")
 	if invalidToken.MatchString(name) {
-		return 0, false, fmt.Errorf("Header field name contains invalid characters: name='%v'", name)
+		return fmt.Errorf("Header field name contains invalid characters: name='%v'", name)
 	}
 
 	name = strings.ToLower(name)
@@ -42,10 +51,14 @@ func (h Headers) Parse(data []byte) (n int, done bool, err error) {
 		h[name] = value
 	}
 
-	return len(header) + 2, false, nil // acount for \r\n
+	return nil
 }
 
 func (h Headers) Get(name string) (value string, found bool) {
 	value, found = h[strings.ToLower(name)]
 	return
+}
+
+func (h Headers) Remove(name string) {
+	delete(h, strings.ToLower(name))
 }

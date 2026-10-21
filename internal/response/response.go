@@ -13,6 +13,7 @@ const (
 	StatusOK                  = 200
 	StatusBadRequest          = 400
 	StatusInternalServerError = 500
+	StatusBadGateway          = 502
 )
 
 type writerState int
@@ -79,8 +80,13 @@ func (w *Writer) WriteHeaders(headers headers.Headers) error {
 	for name, value := range headers {
 		_, err := w.conn.Write([]byte(fmt.Sprintf("%s: %s\r\n", name, value)))
 		if err != nil {
-			fmt.Errorf("Failed to write '%s: %s' header: %v", name, value, err)
+			return fmt.Errorf("Failed to write '%s: %s' header: %v", name, value, err)
 		}
+	}
+
+	_, err := w.conn.Write([]byte("\r\n"))
+	if err != nil {
+		return fmt.Errorf("Failed to write trailing new line after headers: %v", err)
 	}
 
 	w.state = headersWritten
@@ -93,5 +99,27 @@ func (w *Writer) WriteBody(p []byte) (int, error) {
 	}
 
 	w.state = bodyWritten
-	return w.conn.Write(append([]byte("\r\n"), p...))
+	return w.conn.Write(p)
+}
+
+func (w *Writer) WriteChunkedBody(p []byte) (int, error) {
+	if w.state != headersWritten {
+		return 0, fmt.Errorf("Invalid response writer state: %v", w.state)
+	}
+
+	n, err := w.conn.Write([]byte(fmt.Sprintf("%x\r\n", len(p))))
+	if err != nil {
+		return n, err
+	}
+
+	return w.conn.Write(append(p, []byte("\r\n")...))
+}
+
+func (w *Writer) WriteChunkedBodyDone() (int, error) {
+	if w.state != headersWritten {
+		return 0, fmt.Errorf("Invalid response writer state: %v", w.state)
+	}
+
+	w.state = bodyWritten
+	return w.conn.Write([]byte("0\r\n\r\n"))
 }
