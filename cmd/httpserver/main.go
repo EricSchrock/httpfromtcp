@@ -1,6 +1,7 @@
 package main
 
 import (
+	"crypto/sha256"
 	"fmt"
 	"io"
 	"log"
@@ -69,6 +70,8 @@ func proxy(w *response.Writer, req *request.Request) {
 	headers := response.GetDefaultHeaders(len(body))
 	headers.Remove("Content-Length")
 	headers.Add("Transfer-Encoding", "chunked")
+	headers.Add("Trailers", "X-Content-SHA256")
+	headers.Add("Trailers", "X-Content-Length")
 
 	err = w.WriteHeaders(headers)
 	if err != nil {
@@ -89,6 +92,15 @@ func proxy(w *response.Writer, req *request.Request) {
 	_, err = w.WriteChunkedBodyDone()
 	if err != nil {
 		log.Printf("Error writing final chunk: %v", err)
+		return
+	}
+
+	headers.Add("X-Content-SHA256", fmt.Sprintf("%x", sha256.Sum256(body)))
+	headers.Add("X-Content-Length", fmt.Sprintf("%d", len(body)))
+
+	err = w.WriteTrailers(headers)
+	if err != nil {
+		log.Printf("Error writing trailers: %v", err)
 		return
 	}
 }

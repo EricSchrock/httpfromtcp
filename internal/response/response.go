@@ -3,6 +3,7 @@ package response
 import (
 	"fmt"
 	"io"
+	"strings"
 
 	"github.com/EricSchrock/httpfromtcp/internal/headers"
 )
@@ -23,6 +24,7 @@ const (
 	statusLineWritten
 	headersWritten
 	bodyWritten
+	trailersWritten
 )
 
 type Writer struct {
@@ -112,7 +114,12 @@ func (w *Writer) WriteChunkedBody(p []byte) (int, error) {
 		return n, err
 	}
 
-	return w.conn.Write(append(p, []byte("\r\n")...))
+	n, err = w.conn.Write(p)
+	if err != nil {
+		return n, err
+	}
+	_, err = w.conn.Write([]byte("\r\n"))
+	return n, err
 }
 
 func (w *Writer) WriteChunkedBodyDone() (int, error) {
@@ -121,5 +128,36 @@ func (w *Writer) WriteChunkedBodyDone() (int, error) {
 	}
 
 	w.state = bodyWritten
-	return w.conn.Write([]byte("0\r\n\r\n"))
+	return w.conn.Write([]byte("0\r\n"))
+}
+
+func (w *Writer) WriteTrailers(headers headers.Headers) error {
+	if w.state != bodyWritten {
+		return fmt.Errorf("Invalid response writer state: %v", w.state)
+	}
+
+	trailers, found := headers.Get("Trailers")
+	if !found {
+		return fmt.Errorf("Trailers header not found")
+	}
+
+	for _, name := range strings.Split(trailers, ", ") {
+		value, found := headers.Get(name)
+		if !found {
+			return fmt.Errorf("Expected a '%s' trailer but found none", name)
+		}
+
+		_, err := w.conn.Write([]byte(fmt.Sprintf("%s: %s\r\n", name, value)))
+		if err != nil {
+			return fmt.Errorf("Failed to write '%s: %s' trailer: %v", name, value, err)
+		}
+	}
+
+	_, err := w.conn.Write([]byte("\r\n"))
+	if err != nil {
+		return fmt.Errorf("Failed to write trailing new line after trailers: %v", err)
+	}
+
+	w.state = trailersWritten
+	return nil
 }
