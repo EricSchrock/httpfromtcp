@@ -1,6 +1,6 @@
 # HTTP From TCP
 
-HTTP/1.1 implementation
+HTTP/1.1 implementation from the [boot.dev](https://www.boot.dev/courses/learn-http-protocol-golang) HTTP protocol course.
 
 ## Specifications
 
@@ -13,9 +13,20 @@ HTTP/1.1 implementation
 go get -u github.com/stretchr/testify/assert
 ```
 
-## Running Tests
+## Running the Server
 
 ```sh
-go test ./...
+go run cmd/httpserver/main.go
 ```
 
+## Server Endpoints
+
+ - http://localhost:12345/
+ - http://localhost:12345/yourproblem
+ - http://localhost:12345/myproblem
+
+### Proxy Endpoints
+
+ - http://localhost:12345/httpbin
+ - http://localhost:12345/httpbin/stream/100
+ - Etc.
