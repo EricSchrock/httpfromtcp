@@ -33,7 +33,7 @@ func main() {
 }
 
 func handler(w *response.Writer, req *request.Request) {
-	if target := req.RequestLine.RequestTarget; strings.HasPrefix(target, "/httpbin/") {
+	if target := req.RequestLine.RequestTarget; strings.HasPrefix(target, "/httpbin") {
 		proxy(w, req)
 	} else if target == "/yourproblem" {
 		defaultResponse(w, response.StatusBadRequest)
@@ -45,8 +45,8 @@ func handler(w *response.Writer, req *request.Request) {
 }
 
 func proxy(w *response.Writer, req *request.Request) {
-	path := strings.TrimPrefix(req.RequestLine.RequestTarget, "/httpbin/")
-	target := "https://httpbingo.org/" + path
+	path := strings.TrimPrefix(req.RequestLine.RequestTarget, "/httpbin")
+	target := "https://httpbingo.org" + path
 
 	resp, err := http.Get(target)
 	if err != nil {
