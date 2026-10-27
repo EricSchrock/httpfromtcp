@@ -136,7 +136,7 @@ func (w *Writer) WriteTrailers(headers headers.Headers) error {
 		return fmt.Errorf("Invalid response writer state: %v", w.state)
 	}
 
-	trailers, found := headers.Get("Trailers")
+	trailers, found := headers.Get("Trailer")
 	if !found {
 		return fmt.Errorf("Trailers header not found")
 	}

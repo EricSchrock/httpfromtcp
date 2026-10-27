@@ -64,8 +64,8 @@ func proxy(w *response.Writer, req *request.Request) {
 	headers := response.GetDefaultHeaders(0)
 	headers.Remove("Content-Length")
 	headers.Add("Transfer-Encoding", "chunked")
-	headers.Add("Trailers", "X-Content-SHA256")
-	headers.Add("Trailers", "X-Content-Length")
+	headers.Add("Trailer", "X-Content-SHA256")
+	headers.Add("Trailer", "X-Content-Length")
 
 	err = w.WriteHeaders(headers)
 	if err != nil {
