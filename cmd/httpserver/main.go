@@ -55,19 +55,13 @@ func proxy(w *response.Writer, req *request.Request) {
 	}
 	defer resp.Body.Close()
 
-	body, err := io.ReadAll(resp.Body)
-	if err != nil {
-		log.Printf("Failed to read the response body: %v", err)
-		defaultResponse(w, response.StatusInternalServerError)
-	}
-
 	err = w.WriteStatusLine(response.StatusOK)
 	if err != nil {
 		log.Printf("Error writing status line: %v", err)
 		return
 	}
 
-	headers := response.GetDefaultHeaders(len(body))
+	headers := response.GetDefaultHeaders(0)
 	headers.Remove("Content-Length")
 	headers.Add("Transfer-Encoding", "chunked")
 	headers.Add("Trailers", "X-Content-SHA256")
@@ -79,12 +73,25 @@ func proxy(w *response.Writer, req *request.Request) {
 		return
 	}
 
-	chunkSize := 1024
-	for i := 0; i < len(body); i += chunkSize {
-		end := min(i+chunkSize, len(body))
-		_, err = w.WriteChunkedBody(body[i:end])
-		if err != nil {
-			log.Printf("Error writing chunk %d: %v", (i/chunkSize)+1, err)
+	body := make([]byte, 0)
+	chunk := make([]byte, 1024)
+	for {
+		n, err := resp.Body.Read(chunk)
+
+		if n > 0 {
+			_, err = w.WriteChunkedBody(chunk)
+			if err != nil {
+				log.Printf("Error writing chunk: %v", err)
+				return
+			}
+
+			body = append(body, chunk[:n]...)
+		}
+
+		if err == io.EOF {
+			break
+		} else if err != nil {
+			log.Printf("Error reading chunk: %v", err)
 			return
 		}
 	}
