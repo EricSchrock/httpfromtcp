@@ -35,6 +35,8 @@ func main() {
 func handler(w *response.Writer, req *request.Request) {
 	if target := req.RequestLine.RequestTarget; strings.HasPrefix(target, "/httpbin") {
 		proxy(w, req)
+	} else if target == "/video" {
+		serveVideo(w)
 	} else if target == "/yourproblem" {
 		defaultResponse(w, response.StatusBadRequest)
 	} else if target == "/myproblem" {
@@ -61,7 +63,7 @@ func proxy(w *response.Writer, req *request.Request) {
 		return
 	}
 
-	headers := response.GetDefaultHeaders(0)
+	headers := response.GetDefaultHeaders(0, "text/html")
 	headers.Remove("Content-Length")
 	headers.Add("Transfer-Encoding", "chunked")
 	headers.Add("Trailer", "X-Content-SHA256")
@@ -112,6 +114,34 @@ func proxy(w *response.Writer, req *request.Request) {
 	}
 }
 
+func serveVideo(w *response.Writer) {
+	body, err := os.ReadFile("assets/vim.mp4")
+	if err != nil {
+		log.Printf("Error reading video file: %v", err)
+		defaultResponse(w, response.StatusInternalServerError)
+	}
+
+	err = w.WriteStatusLine(response.StatusOK)
+	if err != nil {
+		log.Printf("Error writing status line: %v", err)
+		return
+	}
+
+	headers := response.GetDefaultHeaders(len(body), "video/mp4")
+
+	err = w.WriteHeaders(headers)
+	if err != nil {
+		log.Printf("Error writing headers: %v", err)
+		return
+	}
+
+	_, err = w.WriteBody([]byte(body))
+	if err != nil {
+		log.Printf("Error writing body: %v", err)
+		return
+	}
+}
+
 func defaultResponse(w *response.Writer, status response.StatusCode) {
 	var title string
 	var heading string
@@ -158,7 +188,7 @@ func defaultResponse(w *response.Writer, status response.StatusCode) {
 		return
 	}
 
-	headers := response.GetDefaultHeaders(len(body))
+	headers := response.GetDefaultHeaders(len(body), "text/html")
 	err = w.WriteHeaders(headers)
 	if err != nil {
 		log.Printf("Error writing headers: %v", err)

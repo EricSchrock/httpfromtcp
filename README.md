@@ -1,6 +1,6 @@
 # HTTP From TCP
 
-HTTP/1.1 implementation from the [boot.dev](https://www.boot.dev/courses/learn-http-protocol-golang) HTTP protocol course.
+HTTP/1.1 parser and server implementation from the [boot.dev](https://www.boot.dev/courses/learn-http-protocol-golang) HTTP protocol course.
 
 ## Specifications
 
@@ -9,8 +9,16 @@ HTTP/1.1 implementation from the [boot.dev](https://www.boot.dev/courses/learn-h
 
 ## Installation
 
+### Test Framework
+
 ```sh
 go get -u github.com/stretchr/testify/assert
+```
+
+### Server Assets
+
+```
+mkdir assets && curl -o assets/vim.mp4 https://storage.googleapis.com/qvault-webapp-dynamic-assets/lesson_videos/vim-vs-neovim-prime.mp4
 ```
 
 ## Running the Server
@@ -19,11 +27,12 @@ go get -u github.com/stretchr/testify/assert
 go run cmd/httpserver/main.go
 ```
 
-## Server Endpoints
+## Endpoints
 
  - http://localhost:12345/
  - http://localhost:12345/yourproblem
  - http://localhost:12345/myproblem
+ - http://localhost:12345/video
 
 ### Proxy Endpoints
 

@@ -64,12 +64,12 @@ func (w *Writer) WriteStatusLine(statusCode StatusCode) error {
 	return nil
 }
 
-func GetDefaultHeaders(contentLen int) headers.Headers {
+func GetDefaultHeaders(contentLen int, contentType string) headers.Headers {
 	headers := headers.NewHeaders()
 
-	headers["Content-Length"] = fmt.Sprintf("%d", contentLen)
-	headers["Connection"] = "close"
-	headers["Content-Type"] = "text/html"
+	headers.Add("Content-Length", fmt.Sprintf("%d", contentLen))
+	headers.Add("Connection", "close")
+	headers.Add("Content-Type", contentType)
 
 	return headers
 }

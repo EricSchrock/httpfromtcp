@@ -71,8 +71,7 @@ func (s *Server) handle(conn net.Conn) {
 		return
 	}
 
-	headers := response.GetDefaultHeaders(len(body))
-	headers["Content-Type"] = "text/plain"
+	headers := response.GetDefaultHeaders(len(body), "text/plain")
 	err = w.WriteHeaders(headers)
 	if err != nil {
 		log.Printf("Error writing headers: %v", err)
