@@ -73,7 +73,7 @@ func TestChunkedProxyGet(t *testing.T) {
 	assert.Equal(t, http.StatusOK, resp.StatusCode)
 	assert.Equal(t, int64(-1), resp.ContentLength)
 	assert.True(t, resp.Close)
-	assert.Equal(t, "text/html", resp.Header.Get("Content-Type"))
+	assert.Equal(t, "text/plain; charset=utf-8", resp.Header.Get("Content-Type"))
 	assert.Contains(t, string(body), "httpbingo.org")
 	assert.Equal(t, "chunked", resp.TransferEncoding[0])
 }
@@ -89,7 +89,7 @@ func TestChunkedProxyGetTrailers(t *testing.T) {
 	assert.Equal(t, http.StatusOK, resp.StatusCode)
 	assert.Equal(t, int64(-1), resp.ContentLength)
 	assert.True(t, resp.Close)
-	assert.Equal(t, "text/html", resp.Header.Get("Content-Type"))
+	assert.Equal(t, "text/plain; charset=utf-8", resp.Header.Get("Content-Type"))
 	assert.Equal(t, "chunked", resp.TransferEncoding[0])
 	assert.Equal(t, "4096", resp.Trailer.Get("X-Content-Length"))
 	assert.Equal(t, "bc45051ac426475f459ec0b0c88a6646d037b8dfb1b9fa3ca3ef9203ce33e283", resp.Trailer.Get("X-Content-SHA256"))

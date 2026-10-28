@@ -48,6 +48,7 @@ func (w *Writer) WriteStatusLine(statusCode StatusCode) error {
 		StatusOK:                  "OK",
 		StatusBadRequest:          "Bad Request",
 		StatusInternalServerError: "Internal Server Error",
+		StatusBadGateway:          "Bad Gateway",
 	}
 
 	reasonPhrase, ok := statusMap[statusCode]

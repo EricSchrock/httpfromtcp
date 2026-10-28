@@ -147,5 +147,5 @@ func parseRequestLine(str string) (*RequestLine, int, error) {
 		Method:        method,
 		RequestTarget: parts[1],
 		HttpVersion:   version,
-	}, len(requestLine) + 2, nil // acount for \r\n
+	}, len(requestLine) + 2, nil // account for \r\n
 }

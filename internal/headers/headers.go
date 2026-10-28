@@ -30,7 +30,7 @@ func (h Headers) Parse(data []byte) (n int, done bool, err error) {
 		return 0, false, err
 	}
 
-	return len(header) + 2, false, nil // acount for \r\n
+	return len(header) + 2, false, nil // account for \r\n
 }
 
 func (h Headers) Add(name string, value string) error {

@@ -54,6 +54,7 @@ func proxy(w *response.Writer, req *request.Request) {
 	if err != nil {
 		log.Printf("Request to '%s' failed: %v", target, err)
 		defaultResponse(w, response.StatusBadGateway)
+		return
 	}
 	defer resp.Body.Close()
 
@@ -63,7 +64,7 @@ func proxy(w *response.Writer, req *request.Request) {
 		return
 	}
 
-	headers := response.GetDefaultHeaders(0, "text/html")
+	headers := response.GetDefaultHeaders(0, resp.Header.Get("Content-Type"))
 	headers.Remove("Content-Length")
 	headers.Add("Transfer-Encoding", "chunked")
 	headers.Add("Trailer", "X-Content-SHA256")
@@ -81,9 +82,9 @@ func proxy(w *response.Writer, req *request.Request) {
 		n, err := resp.Body.Read(chunk)
 
 		if n > 0 {
-			_, err = w.WriteChunkedBody(chunk)
-			if err != nil {
-				log.Printf("Error writing chunk: %v", err)
+			_, writeErr := w.WriteChunkedBody(chunk[:n])
+			if writeErr != nil {
+				log.Printf("Error writing chunk: %v", writeErr)
 				return
 			}
 
