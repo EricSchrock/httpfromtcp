@@ -55,7 +55,7 @@ func RequestFromReader(reader io.Reader) (*Request, error) {
 		}
 
 		if (err == io.EOF) && (req.state != parsingComplete) {
-			return nil, fmt.Errorf("Incomplete request received")
+			return nil, fmt.Errorf("incomplete request received")
 		}
 	}
 
@@ -64,7 +64,7 @@ func RequestFromReader(reader io.Reader) (*Request, error) {
 
 func (r *Request) parse(data []byte) (int, error) {
 	if r.state == parsingComplete {
-		return 0, fmt.Errorf("Tried to parse a completed request")
+		return 0, fmt.Errorf("tried to parse a completed request")
 	}
 
 	totalBytesParsed := 0
@@ -109,7 +109,7 @@ func (r *Request) parse(data []byte) (int, error) {
 		totalBytesParsed = len(data)
 
 		if len(r.Body) > content_length {
-			return 0, fmt.Errorf("Body length is >= '%v' bytes but content-length='%v'", len(r.Body), content_length)
+			return 0, fmt.Errorf("body length is >= '%v' bytes but content-length='%v'", len(r.Body), content_length)
 		} else if len(r.Body) == content_length {
 			r.state = parsingComplete
 		}
@@ -126,21 +126,21 @@ func parseRequestLine(str string) (*RequestLine, int, error) {
 
 	parts := strings.Split(requestLine, " ")
 	if len(parts) != 3 {
-		return nil, 0, fmt.Errorf("Expected 3 request line parts but got %v", len(parts))
+		return nil, 0, fmt.Errorf("expected 3 request line parts but got %v", len(parts))
 	}
 
 	method := parts[0]
 	if !slices.Contains([]string{"GET", "POST"}, method) {
-		return nil, 0, fmt.Errorf("Invalid method '%v'", method)
+		return nil, 0, fmt.Errorf("invalid method '%v'", method)
 	}
 
 	http, version, found := strings.Cut(parts[2], "/")
 	if !found {
-		return nil, 0, fmt.Errorf("Couldn't find HTTP version in '%v'", parts[2])
+		return nil, 0, fmt.Errorf("couldn't find HTTP version in '%v'", parts[2])
 	} else if http != "HTTP" {
-		return nil, 0, fmt.Errorf("Expected 'HTTP' but got '%v'", http)
+		return nil, 0, fmt.Errorf("expected 'HTTP' but got '%v'", http)
 	} else if version != "1.1" {
-		return nil, 0, fmt.Errorf("Only supports HTTP version '1.1' not '%v'", version)
+		return nil, 0, fmt.Errorf("only supports HTTP version '1.1' not '%v'", version)
 	}
 
 	return &RequestLine{

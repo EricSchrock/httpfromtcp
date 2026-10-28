@@ -13,6 +13,7 @@ HTTP/1.1 parser and server implementation from the [boot.dev](https://www.boot.d
 
 ```sh
 go get -u github.com/stretchr/testify/assert
+go install honnef.co/go/tools/cmd/staticcheck@latest
 ```
 
 ### Server Assets

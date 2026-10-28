@@ -146,23 +146,24 @@ func defaultResponse(w *response.Writer, status response.StatusCode) {
 	var title string
 	var heading string
 	var message string
-	if status == response.StatusOK {
+	switch status {
+	case response.StatusOK:
 		title = "200 OK"
 		heading = "Success!"
 		message = "Your request was an absolute banger."
-	} else if status == response.StatusBadRequest {
+	case response.StatusBadRequest:
 		title = "400 Bad Request"
 		heading = "Bad Request"
 		message = "Your request honestly kinda sucked."
-	} else if status == response.StatusInternalServerError {
+	case response.StatusInternalServerError:
 		title = "500 Internal Server Error"
 		heading = "Internal Server Error"
 		message = "Okay, you know what? This one is on me."
-	} else if status == response.StatusBadGateway {
+	case response.StatusBadGateway:
 		title = "502 Bad Gateway"
 		heading = "Bad Gateway"
 		message = ""
-	} else {
+	default:
 		message = fmt.Sprintf("Unsupported response status: %v", status)
 		log.Print(message)
 		status = response.StatusInternalServerError

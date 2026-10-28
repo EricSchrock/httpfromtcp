@@ -41,7 +41,7 @@ func NewWriter(conn io.Writer) *Writer {
 
 func (w *Writer) WriteStatusLine(statusCode StatusCode) error {
 	if w.state != writerInitialized {
-		return fmt.Errorf("Invalid response writer state: %v", w.state)
+		return fmt.Errorf("invalid response writer state: %v", w.state)
 	}
 
 	statusMap := map[StatusCode]string{
@@ -52,12 +52,12 @@ func (w *Writer) WriteStatusLine(statusCode StatusCode) error {
 
 	reasonPhrase, ok := statusMap[statusCode]
 	if !ok {
-		return fmt.Errorf("Invalid status code: %v", statusCode)
+		return fmt.Errorf("invalid status code: %v", statusCode)
 	}
 
-	_, err := w.conn.Write([]byte(fmt.Sprintf("HTTP/1.1 %d %s\r\n", statusCode, reasonPhrase)))
+	_, err := fmt.Fprintf(w.conn, "HTTP/1.1 %d %s\r\n", statusCode, reasonPhrase)
 	if err != nil {
-		return fmt.Errorf("Failed to write status line: %v", err)
+		return fmt.Errorf("failed to write status line: %v", err)
 	}
 
 	w.state = statusLineWritten
@@ -76,19 +76,19 @@ func GetDefaultHeaders(contentLen int, contentType string) headers.Headers {
 
 func (w *Writer) WriteHeaders(headers headers.Headers) error {
 	if w.state != statusLineWritten {
-		return fmt.Errorf("Invalid response writer state: %v", w.state)
+		return fmt.Errorf("invalid response writer state: %v", w.state)
 	}
 
 	for name, value := range headers {
-		_, err := w.conn.Write([]byte(fmt.Sprintf("%s: %s\r\n", name, value)))
+		_, err := fmt.Fprintf(w.conn, "%s: %s\r\n", name, value)
 		if err != nil {
-			return fmt.Errorf("Failed to write '%s: %s' header: %v", name, value, err)
+			return fmt.Errorf("failed to write '%s: %s' header: %v", name, value, err)
 		}
 	}
 
 	_, err := w.conn.Write([]byte("\r\n"))
 	if err != nil {
-		return fmt.Errorf("Failed to write trailing new line after headers: %v", err)
+		return fmt.Errorf("failed to write trailing new line after headers: %v", err)
 	}
 
 	w.state = headersWritten
@@ -97,7 +97,7 @@ func (w *Writer) WriteHeaders(headers headers.Headers) error {
 
 func (w *Writer) WriteBody(p []byte) (int, error) {
 	if w.state != headersWritten {
-		return 0, fmt.Errorf("Invalid response writer state: %v", w.state)
+		return 0, fmt.Errorf("invalid response writer state: %v", w.state)
 	}
 
 	w.state = bodyWritten
@@ -106,10 +106,10 @@ func (w *Writer) WriteBody(p []byte) (int, error) {
 
 func (w *Writer) WriteChunkedBody(p []byte) (int, error) {
 	if w.state != headersWritten {
-		return 0, fmt.Errorf("Invalid response writer state: %v", w.state)
+		return 0, fmt.Errorf("invalid response writer state: %v", w.state)
 	}
 
-	n, err := w.conn.Write([]byte(fmt.Sprintf("%x\r\n", len(p))))
+	n, err := fmt.Fprintf(w.conn, "%x\r\n", len(p))
 	if err != nil {
 		return n, err
 	}
@@ -124,7 +124,7 @@ func (w *Writer) WriteChunkedBody(p []byte) (int, error) {
 
 func (w *Writer) WriteChunkedBodyDone() (int, error) {
 	if w.state != headersWritten {
-		return 0, fmt.Errorf("Invalid response writer state: %v", w.state)
+		return 0, fmt.Errorf("invalid response writer state: %v", w.state)
 	}
 
 	w.state = bodyWritten
@@ -133,29 +133,29 @@ func (w *Writer) WriteChunkedBodyDone() (int, error) {
 
 func (w *Writer) WriteTrailers(headers headers.Headers) error {
 	if w.state != bodyWritten {
-		return fmt.Errorf("Invalid response writer state: %v", w.state)
+		return fmt.Errorf("invalid response writer state: %v", w.state)
 	}
 
 	trailers, found := headers.Get("Trailer")
 	if !found {
-		return fmt.Errorf("Trailers header not found")
+		return fmt.Errorf("trailers header not found")
 	}
 
 	for _, name := range strings.Split(trailers, ", ") {
 		value, found := headers.Get(name)
 		if !found {
-			return fmt.Errorf("Expected a '%s' trailer but found none", name)
+			return fmt.Errorf("expected a '%s' trailer but found none", name)
 		}
 
-		_, err := w.conn.Write([]byte(fmt.Sprintf("%s: %s\r\n", name, value)))
+		_, err := fmt.Fprintf(w.conn, "%s: %s\r\n", name, value)
 		if err != nil {
-			return fmt.Errorf("Failed to write '%s: %s' trailer: %v", name, value, err)
+			return fmt.Errorf("failed to write '%s: %s' trailer: %v", name, value, err)
 		}
 	}
 
 	_, err := w.conn.Write([]byte("\r\n"))
 	if err != nil {
-		return fmt.Errorf("Failed to write trailing new line after trailers: %v", err)
+		return fmt.Errorf("failed to write trailing new line after trailers: %v", err)
 	}
 
 	w.state = trailersWritten
